@@ -1,6 +1,7 @@
 % which -all resample
 clc;
-
+tiledlayout(2,1);
+figure;
 INPUT_FILE = "input/audio.wav";
 OUTPUT_FILE = "output/audio.wav";
 
@@ -8,17 +9,20 @@ OUTPUT_FILE = "output/audio.wav";
 duration = size(audio) / sample_rate;
 
 % Play the sound file
-sound(sound, sample_rate);
+% sound(audio, sample_rate);
+plot_audio(audio, sample_rate);
 
 % Generate and play 1kHz cos wave as audio
 cos_audio = generate_frequency(sample_rate, duration, 1000);
-sound(cos_audio, sample_rate);
+% sound(cos_audio, sample_rate);
 
 function cosine_signal = generate_frequency(sample_rate, duration, frequency)
+
     t = 0:1/sample_rate:duration;
+
     cosine_signal = cos(2 * pi * frequency * t);
 
-    figure;
+    nexttile
     plot(t, cosine_signal);
     title('Cosine Signal Waveform');
     xlabel('Time (seconds)');
@@ -51,4 +55,24 @@ function [audio, sample_rate] = process_audio(input_file, output_file, target_sa
     sample_rate = target_sample_rate;
     
     audiowrite(output_file, audio, sample_rate);
+
+end
+
+
+function plot_audio(audio, sample_rate)
+
+    duration = size(audio) / sample_rate;
+    
+    t = 0:1/sample_rate:duration-(1/sample_rate);
+
+    % disp(size(audio));
+    % disp(size(t));
+
+    nexttile
+    plot(t, audio);
+    title('Audio Waveform');
+    xlabel('Time (seconds)');
+    ylabel('Amplitude');
+    grid on;
+
 end
