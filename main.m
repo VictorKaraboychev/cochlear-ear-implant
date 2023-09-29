@@ -1,8 +1,8 @@
 % which -all resample
 clc;
 
-INPUT_FILE = "InputSoundtoCochlearImplantProcessor.wav";
-OUTPUT_FILE = "OutputSoundtoCochlearImplantProcessor.wav";
+INPUT_FILE = "input/audio.wav";
+OUTPUT_FILE = "output/audio.wav";
 
 [audio, sample_rate] = process_audio(INPUT_FILE, OUTPUT_FILE, 16000);
 duration = size(audio) / sample_rate;
