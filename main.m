@@ -1,20 +1,28 @@
 % which -all resample
 clc;
 tiledlayout(2,1);
-figure;
 INPUT_FILE = "input/audio.wav";
 OUTPUT_FILE = "output/audio.wav";
+
+PLAY_SOUND = 1;
 
 [audio, sample_rate] = process_audio(INPUT_FILE, OUTPUT_FILE, 16000);
 duration = size(audio) / sample_rate;
 
 % Play the sound file
-% sound(audio, sample_rate);
+if PLAY_SOUND
+    sound(audio, sample_rate);
+end
+
+% plot the sound file
 plot_audio(audio, sample_rate);
 
 % Generate and play 1kHz cos wave as audio
 cos_audio = generate_frequency(sample_rate, duration, 1000);
-% sound(cos_audio, sample_rate);
+
+if PLAY_SOUND
+    sound(cos_audio, sample_rate);
+end
 
 function cosine_signal = generate_frequency(sample_rate, duration, frequency)
 
