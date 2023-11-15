@@ -1,54 +1,69 @@
-INPUT_FILE = "input/silent-observers.wav";
+INPUT_FILE = "input/at_least_it_was_here.wav";
+
+REFINE_FILE = "refine/at_least_it_was_here.wav";
+OUTPUT_FILE = "output/at_least_it_was_here.wav";
+
+[audio, sample_rate] = process_audio(INPUT_FILE, 16000);
+duration = size(audio) / sample_rate;
+
+audiowrite(REFINE_FILE, audio, sample_rate);
 
 min_frequency = 100;    % min frequency
-max_frequency = 8000;   % max frequency
-num_buckets = 8;        % number of buckets
+max_frequency = 7500;   % max frequency
+num_buckets = 128;      % number of buckets
 
 error = 0.05;           % frequency error for stopband
 
 bucket_sizes = compute_bucket_sizes(min_frequency, max_frequency, num_buckets);
 
-disp(bucket_sizes);
-
-[audio, sample_rate] = audioread(INPUT_FILE);
-
-% Create a figure for the tile layout
-tile_fig = figure;
+output_audio = zeros(size(audio));
 
 for i = 1:num_buckets
     f_low = bucket_sizes(i);     
     f_high = bucket_sizes(i + 1);   
     
     filtered = bandpass_filter(audio, f_low, f_high, sample_rate, error);
-
-    % Create subplot in the tile layout for filtered audio (left column)
-    subplot(num_buckets, 2, 2*i-1);
-    
-    % Plot the filtered audio in each bucket
-    plot((0:length(filtered)-1)/sample_rate, filtered);
-    title(['Filtered ' num2str(i)]);
-    xlabel('Time (s)');
-    ylabel('Amplitude');
-
     rectified = abs(filtered);
-
     amplitude = lowpass_filter(rectified, 400, sample_rate, error);
-    
-    % Create subplot in the tile layout for lowpass audio (right column)
-    subplot(num_buckets, 2, 2*i);
-    
-    % Plot the lowpass audio in each bucket
-    plot((0:length(amplitude)-1)/sample_rate, amplitude);
-    title(['Low Pass ' num2str(i)]);
-    xlabel('Time (s)');
-    ylabel('Amplitude');
 
-    % Save filtered audio
-    audiowrite("output/bucket_" + i + ".wav", amplitude, sample_rate);
+    audiowrite("output/bucket_" + i + ".wav", filtered, sample_rate);
+
+    frequency = generate_frequency(sample_rate, duration, sqrt(f_low * f_high));
+
+    output_audio = output_audio + amplitude .* frequency;
 end
 
-% Adjust layout for better appearance
-sgtitle('Audio in Each Bucket');
+audiowrite(OUTPUT_FILE, output_audio, sample_rate);
+
+function [audio, sample_rate] = process_audio(input_file, target_sample_rate)
+    [raw_audio, sample_rate] = audioread(input_file);
+    
+    shape = size(raw_audio);
+    
+    samples = shape(1);
+    channels = shape(2);
+    
+    audio = zeros(samples, 1);
+    
+    % Flattening audio channels to mono
+    if channels > 1
+        for s = 1:samples
+            for c = 1:channels
+                audio(s) = audio(s) + raw_audio(s, c);
+            end
+        end
+    end
+    
+    % Resample the signal to target_sample_rate
+    audio = resample(audio, target_sample_rate, sample_rate);
+    sample_rate = target_sample_rate;
+end
+
+function cosine_signal = generate_frequency(sample_rate, duration, frequency)
+    t = (0:1/sample_rate:duration - 1/sample_rate).';
+    cosine_signal = cos(2 * pi * frequency * t);
+end
+
 
 function bucket_sizes = compute_bucket_sizes(min_freq, max_freq, num_buckets)
     ratio = max_freq / min_freq;
