@@ -23,6 +23,8 @@ for i = 1:num_buckets
     f_high = bucket_sizes(i + 1);   
     
     filtered = bandpass_filter(audio, f_low, f_high, sample_rate, error);
+    % filtered = new_bandpass_filter(audio, f_low, f_high, sample_rate);
+
     rectified = abs(filtered);
     amplitude = lowpass_filter(rectified, 400, sample_rate, error);
 
@@ -85,6 +87,20 @@ function filtered_audio = bandpass_filter(audio, f_low, f_high, f_sample, error)
 
     h  = fdesign.bandpass(stop_low, f_low, f_high, stop_high, attenuation, a_pass, attenuation, f_sample);
     Hd = design(h, 'ellip', 'MatchExactly', match);
+
+    filtered_audio = filter(Hd, audio);
+end
+
+function filtered_audio = new_bandpass_filter(audio, Fc1, Fc2, Fs)
+    N = 500;         % Order
+    flag = 'scale';  % Sampling Flag
+
+    % Create the window vector for the design algorithm.
+    win = blackmanharris(N+1);
+
+    % Calculate the coefficients using the FIR1 function.
+    b  = fir1(N, [Fc1 Fc2]/(Fs/2), 'bandpass', win, flag);
+    Hd = dfilt.dffir(b);
 
     filtered_audio = filter(Hd, audio);
 end
