@@ -2,7 +2,7 @@ INPUT_FILE = "input/frequency-sweep.wav";
 
 min_frequency = 100;    % min frequency
 max_frequency = 8000;   % max frequency
-num_buckets = 4;        % number of buckets
+num_buckets = 12;        % number of buckets
 
 order = 500;            % filter order
 
@@ -89,7 +89,7 @@ function filtered_audio = bandpass_filter_fir(audio, f_low, f_high, f_sample, or
     flag = 'scale';  % Sampling Flag
 
     % Create the window vector for the design algorithm.
-    win = hamming(order + 1);
+    win = kaiser(order + 1);
 
     % Calculate the coefficients using the FIR1 function.
     b  = fir1(order, [f_low f_high]/(f_sample/2), 'bandpass', win, flag);
@@ -117,7 +117,7 @@ function filtered_audio = lowpass_filter_fir(audio, f_high, f_sample, order)
     flag = 'scale';                             % Sampling Flag
     
     % Create the window vector for the design algorithm.
-    win = hamming(order + 1);
+    win = kaiser(order + 1);
     
     % Calculate the coefficients using the FIR1 function.
     b  = fir1(order, f_high/(f_sample/2), 'low', win, flag);
