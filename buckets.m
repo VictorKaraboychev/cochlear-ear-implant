@@ -4,27 +4,22 @@ f_max = 12800; % Maximum frequency in Hz
 N = 7; % Number of bins
 
 % Specify the Greenwood function as the tonotopic model
-greenwoodModel = @(x) (165.4 * (10.^(2.1*x - 0.06)) - 0.11);
+% greenwoodModel = @(x) (165.4 * (10.^(2.1*x - 0.06)) - 0.11);
 linearModel = @(x) f_min + x * (f_max - f_min);
-logarithmicModel = @(x) f_min * 10.^(x * log10(f_max/f_min));
-% logarithmicModel = @(x) f_min * (f_max/f_min).^x;
 sqrtModel = @(x) f_min + x.^2 * (f_max - f_min);
 exponentialModel = @(x) f_min * exp(x * log(f_max/f_min));
-tanhModel = @(x) f_min + 0.5 * (tanh(2*x - 1) + 1) * (f_max - f_min);
-doublingBinSizeModel = @(x) f_min * 2.^(x * log2(f_max/f_min));
+% tanhModel = @(x) f_min + 0.5 * (tanh(2*x - 1) + 1) * (f_max - f_min);
 
 % logarithmicModel, exponentialModel, and doublingBinSizeModel are identical
 % tanh and greenwood dont seem right...
 
 % figure;
-bins = calc_bins(f_min, f_max, N, greenwoodModel);
-bins = calc_bins(f_min, f_max, N, linearModel);
-bins = calc_bins(f_min, f_max, N, logarithmicModel);
-bins = calc_bins(f_min, f_max, N, exponentialModel);
-bins = calc_bins(f_min, f_max, N, doublingBinSizeModel);
-bins = calc_bins(f_min, f_max, N, sqrtModel);
-bins = calc_bins(f_min, f_max, N, tanhModel);
+% bins = calc_bins(f_min, f_max, N, greenwoodModel);
 
+bins = calc_bins(f_min, f_max, N, exponentialModel);
+bins = calc_bins(f_min, f_max, N, sqrtModel);
+% bins = calc_bins(f_min, f_max, N, tanhModel);
+bins = calc_bins(f_min, f_max, N, linearModel);
 
 function bins = calc_bins(min_frequency, max_frequency, numBins, tonotopicModel)
     % Calculate the normalized distance along the cochlea for each bin
