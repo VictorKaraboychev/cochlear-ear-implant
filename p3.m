@@ -1,16 +1,16 @@
 FILES = [
-    "at_least_it_was_here.wav",
-    "frequency-sweep.wav",
-    "hotel-california.wav",
-    "intrinsically.wav",
-    "techies.wav",
+    "at_least_it_was_here.wav";
+    "frequency-sweep.wav";
+    "hotel-california.wav";
+    "intrinsically.wav";
+    "techies.wav";
     "tektok.wav"
 ];
 
 BUCKETS = [
-    12,
-    % 48,
-    % 128
+    12;
+    48;
+    128
 ];
 
 MIN_FREQUENCY = 100;        % min frequency
@@ -43,10 +43,6 @@ end
 disp("DONE");
 
 function [audio, sample_rate] = process_audio(input_file, target_sample_rate, min_freq, max_freq, num_buckets, max_db)
-    error = 0.05;                           % frequency error for stopband
-    bandpass_order = 500;                   % bandpass filter order
-    lowpass_order = 500;                    % bandpass filter order
-
     % Read in audio signal
     [raw_audio, sample_rate] = audioread(input_file);
     
@@ -82,11 +78,11 @@ function [audio, sample_rate] = process_audio(input_file, target_sample_rate, mi
         f_high = bucket_sizes(i + 1);   
         
         % Extract frequency band
-        filtered = bandpass_filter_fir(audio, f_low, f_high, sample_rate, bandpass_order);
+        filtered = bandpass_filter_iir(audio, f_low, f_high, sample_rate);
     
         % Get amplitude of frequency band
         rectified = abs(filtered);
-        amplitude = lowpass_filter_fir(rectified, 400, sample_rate, lowpass_order);
+        amplitude = lowpass_filter_iir(rectified, 400, sample_rate);
     
         % Generate frequency and modulate by amplitude
         frequency = generate_frequency(sample_rate, duration, sqrt(f_low * f_high)) .* amplitude;
@@ -114,22 +110,13 @@ function bucket_sizes = compute_bucket_sizes(f_min, f_max, num_buckets)
     bucket_sizes = exponentialModel(linspace(0, 1, num_buckets + 1));
 end
 
-function filtered_audio = bandpass_filter_irr(audio, f_low, f_high, f_sample, error)
+function filtered_audio = bandpass_filter_iir(audio, f_low, f_high, f_sample)
     % f_low: First Passband Frequency
     % f_high: Second Passband Frequency
-
     % f_sample: Sampling Frequency
     
-    tol = 0.0;
-
-    stop_low = f_low * (1 - error + tol);       % First Stopband Frequency
-    stop_high = f_high * (1 + error);           % Second Stopband Frequency
-    attenuation = 50;                           % Stopband Attenuation (dB)
+    order = 50;
     a_pass  = 0.01;                             % Passband Ripple (dB)
-    match  = 'passband';                        % Band to match exactly
-
-    % h = fdesign.bandpass(stop_low, f_low * (1 + tol), f_high * (1 - tol), stop_high, attenuation, a_pass, attenuation, f_sample);
-    % Hd = design(h, 'ellip', 'MatchExactly', match);
 
     h = fdesign.bandpass('N,Fp1,Fp2,Ap', order, f_low, f_high, a_pass, f_sample);
     Hd = design(h, 'cheby1');
@@ -137,8 +124,9 @@ function filtered_audio = bandpass_filter_irr(audio, f_low, f_high, f_sample, er
     filtered_audio = filter(Hd, audio);
 end
 
-function filtered_audio = bandpass_filter_fir(audio, f_low, f_high, f_sample, order)
+function filtered_audio = bandpass_filter_kaiser(audio, f_low, f_high, f_sample)
     flag = 'scale';  % Sampling Flag
+    order = 500;
 
     % Create the window vector for the design algorithm.
     win = kaiser(order + 1);
@@ -150,28 +138,51 @@ function filtered_audio = bandpass_filter_fir(audio, f_low, f_high, f_sample, or
     filtered_audio = filter(Hd, audio);
 end
 
-function filtered_audio = lowpass_filter_irr(audio, f_high, f_sample, order)
-    % f_high: Passband Frequency
+function filtered_audio = bandpass_filter_rect(audio, f_low, f_high, f_sample)
+    order = 500;
+    flag = 'scale';  % Sampling Flag
 
-    stop = f_high * (1 + error);                % Stopband Frequency
-    attenuation = 150;                          % Stopband Attenuation (dB)
-    a_pass = 0.01;                              % Passband Ripple (dB)
-    match = 'passband';                         % Band to match exactly
+    % Create the window vector for the design algorithm.
+    win = rectwin(order+1);
     
-    % h  = fdesign.lowpass(f_high, stop, a_pass, attenuation, f_sample);
-    % Hd = design(h, 'ellip', 'MatchExactly', match);
+    % Calculate the coefficients using the FIR1 function.
+    b  = fir1(order, [f_low f_high]/(f_sample/2), 'bandpass', win, flag);
+    Hd = dfilt.dffir(b);
 
-    h = fdesign.lowpass('N,Fp1,Ap', order, f_high, a_pass, f_sample);
+    filtered_audio = filter(Hd, audio);
+end
+
+function filtered_audio = lowpass_filter_iir(audio, f_high, f_sample)
+    % f_high: Passband Frequency
+    order = 50;
+    a_pass = 0.01;                              % Passband Ripple (dB)
+    
+    h = fdesign.lowpass('N,Fp,Ap', order, f_high, a_pass, f_sample);
     Hd = design(h, 'cheby1');
 
     filtered_audio = filter(Hd, audio);
 end
 
-function filtered_audio = lowpass_filter_fir(audio, f_high, f_sample, order)
+function filtered_audio = lowpass_filter_kaiser(audio, f_high, f_sample)
     flag = 'scale';                             % Sampling Flag
+    order = 500;
     
     % Create the window vector for the design algorithm.
     win = kaiser(order + 1);
+    
+    % Calculate the coefficients using the FIR1 function.
+    b  = fir1(order, f_high/(f_sample/2), 'low', win, flag);
+    Hd = dfilt.dffir(b);
+
+    filtered_audio = filter(Hd, audio);
+end
+
+function filtered_audio = lowpass_filter_rect(audio, f_high, f_sample)
+    flag = 'scale';  % Sampling Flag
+    order = 500;
+
+    % Create the window vector for the design algorithm.
+    win = rectwin(order+1);
     
     % Calculate the coefficients using the FIR1 function.
     b  = fir1(order, f_high/(f_sample/2), 'low', win, flag);
