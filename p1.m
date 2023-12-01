@@ -25,7 +25,6 @@ if PLAY_SOUND
 end
 
 function cosine_signal = generate_frequency(sample_rate, duration, frequency)
-
     t = 0:1/sample_rate:duration;
 
     cosine_signal = cos(2 * pi * frequency * t);
@@ -63,18 +62,13 @@ function [audio, sample_rate] = process_audio(input_file, output_file, target_sa
     sample_rate = target_sample_rate;
     
     audiowrite(output_file, audio, sample_rate);
-
 end
 
 
 function plot_audio(audio, sample_rate)
-
     duration = size(audio) / sample_rate;
     
     t = 0:1/sample_rate:duration-(1/sample_rate);
-
-    % disp(size(audio));
-    % disp(size(t));
 
     nexttile
     plot(t, audio);
@@ -82,5 +76,4 @@ function plot_audio(audio, sample_rate)
     xlabel('Time (seconds)');
     ylabel('Amplitude');
     grid on;
-
 end
