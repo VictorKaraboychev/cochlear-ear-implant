@@ -78,11 +78,11 @@ function [audio, sample_rate] = process_audio(input_file, target_sample_rate, mi
         f_high = bucket_sizes(i + 1);   
         
         % Extract frequency band
-        filtered = bandpass_filter_iir(audio, f_low, f_high, sample_rate);
+        filtered = bandpass_filter_rect(audio, f_low, f_high, sample_rate);
     
         % Get amplitude of frequency band
         rectified = abs(filtered);
-        amplitude = lowpass_filter_iir(rectified, 400, sample_rate);
+        amplitude = lowpass_filter_kaiser(rectified, 400, sample_rate);
     
         % Generate frequency and modulate by amplitude
         frequency = generate_frequency(sample_rate, duration, sqrt(f_low * f_high)) .* amplitude;
@@ -110,7 +110,7 @@ function bucket_sizes = compute_bucket_sizes(f_min, f_max, num_buckets)
     bucket_sizes = exponentialModel(linspace(0, 1, num_buckets + 1));
 end
 
-function filtered_audio = bandpass_filter_iir(audio, f_low, f_high, f_sample)
+function filtered_audio = bandpass_filter_cheby(audio, f_low, f_high, f_sample)
     % f_low: First Passband Frequency
     % f_high: Second Passband Frequency
     % f_sample: Sampling Frequency
@@ -152,7 +152,7 @@ function filtered_audio = bandpass_filter_rect(audio, f_low, f_high, f_sample)
     filtered_audio = filter(Hd, audio);
 end
 
-function filtered_audio = lowpass_filter_iir(audio, f_high, f_sample)
+function filtered_audio = lowpass_filter_cheby(audio, f_high, f_sample)
     % f_high: Passband Frequency
     order = 50;
     a_pass = 0.01;                              % Passband Ripple (dB)
