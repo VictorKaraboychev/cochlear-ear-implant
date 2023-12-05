@@ -75,14 +75,16 @@ function [audio, sample_rate] = process_audio(input_file, target_sample_rate, mi
     
     for i = 1:num_buckets
         f_low = bucket_sizes(i);     
-        f_high = bucket_sizes(i + 1);   
+        f_high = bucket_sizes(i + 1);
+
+        bandwidth = f_high - f_low;
         
         % Extract frequency band
         filtered = bandpass_filter_rect(audio, f_low, f_high, sample_rate);
     
         % Get amplitude of frequency band
         rectified = abs(filtered);
-        amplitude = lowpass_filter_cheby(rectified, 400, sample_rate);
+        amplitude = lowpass_filter_rect(rectified, bandwidth / 2, sample_rate);
     
         % Generate frequency and modulate by amplitude
         frequency = generate_frequency(sample_rate, duration, sqrt(f_low * f_high)) .* amplitude;
